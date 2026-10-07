@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f5e5a">
+<title>منصة مدرسة المهندس عبد الحميد أبو بكر</title>
+<style>
+:root{--bg:#f4f1ea;--ink:#1b2a2f;--card:#fff;--pri:#0f5e5a;--gold:#c9953c;--mut:#6b7a7d;--line:#e3ddd0;--ok:#2e7d4f;--bad:#b3392f}
+@media (prefers-color-scheme:dark){:root{--bg:#10191b;--ink:#eae6dc;--card:#18262a;--pri:#3aa79f;--gold:#e0b25a;--mut:#98a8aa;--line:#273a3e;--ok:#5cc08a;--bad:#e8776d}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Segoe UI",Tahoma,"Noto Naskh Arabic",Arial,sans-serif;line-height:1.7}
+.hero{background:linear-gradient(135deg,#0b4744,#0f5e5a 60%,#1b7d76);color:#fff;padding:calc(22px + env(safe-area-inset-top,0px)) 16px 26px;border-bottom:4px solid var(--gold);text-align:center}
+.hero .logo{font-size:38px}.hero h1{margin:4px 0 2px;font-size:20px;line-height:1.5}.hero p{margin:0;font-size:13px;opacity:.85}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--card);padding:10px 14px;border-bottom:1px solid var(--line);font-size:14px}
+.badge{background:var(--gold);color:#2b1d00;border-radius:20px;padding:1px 10px;font-size:12px;margin-inline-start:6px}
+main{max-width:640px;margin:0 auto;padding:14px 14px calc(24px + env(safe-area-inset-bottom,0px))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+h2{font-size:17px;margin:0 0 10px;color:var(--pri)}h3{font-size:16px;margin:0 0 4px}
+label{display:block;font-size:13px;color:var(--mut);margin:8px 0 3px}
+input,select,textarea{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font:inherit}
+textarea{min-height:70px;resize:vertical}
+button{font:inherit;border:0;border-radius:10px;padding:10px 16px;background:var(--pri);color:#fff;cursor:pointer}
+button.sec{background:transparent;color:var(--pri);border:1px solid var(--pri)}
+button.del{background:transparent;color:var(--bad);border:1px solid var(--bad);padding:4px 10px;font-size:13px}
+button.go{background:var(--ok);padding:4px 10px;font-size:13px}
+.full{width:100%;margin-top:12px}
+.tabs{display:flex;gap:6px;margin-bottom:6px}.tabs button{flex:1;background:var(--bg);color:var(--ink)}.tabs button.on{background:var(--pri);color:#fff}
+.meta{font-size:12.5px;color:var(--mut)}.err{color:var(--bad);font-size:13px;margin-top:8px;min-height:18px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;text-align:center;padding:10px 4px}.stat b{display:block;font-size:22px;color:var(--gold)}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line);font-size:14px}
+.row .bt{display:flex;gap:6px}
+.cm{background:var(--bg);border-radius:10px;padding:6px 10px;margin:6px 0;font-size:13.5px}.cm b{color:var(--pri)}
+.ok{color:var(--ok);font-weight:600}
+img.pic{max-width:100%;border-radius:10px;margin:6px 0}
+.opt{display:flex;gap:8px;align-items:center;color:var(--ink);font-size:15px}.opt input{width:auto}
+</style>
+</head>
+<body>
+<div class="hero"><div class="logo">🎓</div><h1>منصة مدرسة المهندس<br>عبد الحميد أبو بكر</h1><p>الواجبات والتفاعل بين المدرسين والطلاب</p></div>
+<div id="bar"></div>
+<main id="app"><p class="meta" style="text-align:center">جارٍ التحميل…</p></main>
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {getAuth,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {getFirestore,doc,getDoc,getDocs,setDoc,addDoc,deleteDoc,updateDoc,collection,query,where,writeBatch} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app=initializeApp({apiKey:"AIzaSyDqaRDns-RJ9ALr8t5RmdJyucpGKWPWC-4",authDomain:"abdelhamid-school.firebaseapp.com",projectId:"abdelhamid-school",storageBucket:"abdelhamid-school.firebasestorage.app",messagingSenderId:"750776369841",appId:"1:750776369841:web:b8087c0d653542e1bdd890"});
+const auth=getAuth(app),db=getFirestore(app);
+const R={student:'طالب',teacher:'مدرس',admin:'مسؤول المنصة',parent:'ولي أمر'};
+const $=s=>document.querySelector(s);
+const esc=t=>String(t??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const MSG={'auth/email-already-in-use':'اسم المستخدم مستخدم من قبل','auth/weak-password':'الرمز ضعيف (6 خانات على الأقل)','auth/invalid-credential':'اسم المستخدم أو الرمز غير صحيح','auth/too-many-requests':'محاولات كثيرة، حاول لاحقاً','admin-exists':'يوجد مسؤول للمنصة بالفعل','no-child':'اسم مستخدم الطالب غير موجود','auth/network-request-failed':'تأكد من الاتصال بالإنترنت'};
+let me=null,tab='in',err='',signing=false;
+
+onAuthStateChanged(auth,async u=>{if(signing)return;if(!u){me=null;return go()}await loadMe(u)});
+async function loadMe(u){
+  try{const s=await getDoc(doc(db,'users',u.uid));me=s.exists()?{id:u.uid,...s.data()}:null}catch(e){me=null}
+  if(!me){await signOut(auth)}
+  go();
+}
+
+async function go(){
+  $('#bar').innerHTML=me?`<div class="bar"><span>👤 ${esc(me.name)}<span class="badge">${R[me.role]}</span></span><button class="sec" data-a="out">خروج</button></div>`:'';
+  if(!me){$('#app').innerHTML=authV();return}
+  $('#app').innerHTML='<p class="meta" style="text-align:center">جارٍ التحميل…</p>';
+  try{$('#app').innerHTML=me.role==='admin'?await adminV():me.role==='teacher'?await teacherV():me.role==='parent'?await parentV():await studentV()}
+  catch(e){$('#app').innerHTML='<div class="card err">تعذّر التحميل: '+esc(e.code||e.message)+'</div>'}
+}
+
+function authV(){
+  const up=tab==='up';
+  return `<div class="card"><div class="tabs"><button class="${up?'':'on'}" data-a="tab" data-i="in">دخول</button><button class="${up?'on':''}" data-a="tab" data-i="up">حساب جديد</button></div>
+  ${up?`<label>الاسم</label><input id="n" autocomplete="name">
+  <label>نوع الحساب</label><select id="r"><option value="student">طالب</option><option value="teacher">مدرس</option><option value="parent">ولي أمر</option><option value="admin">مسؤول المنصة</option></select><div id="ch" style="display:none"><label>اسم مستخدم ابنك/ابنتك (الطالب)</label><input id="cu" autocapitalize="none"></div>`:''}
+  <label>اسم المستخدم (إنجليزي وأرقام)</label><input id="u" placeholder="ahmed12" autocapitalize="none" autocomplete="username">
+  <label>الرمز (6 خانات على الأقل)</label><input id="p" type="password" autocomplete="current-password">
+  <div class="err">${esc(err)}</div>
+  <button class="full" id="sub" data-a="${up?'signup':'login'}">${up?'إنشاء الحساب':'دخول'}</button></div>`;
+}
+const email=u=>u.trim().toLowerCase()+'@abdelhamid.school';
+
+async function login(){
+  const u=$('#u').value,p=$('#p').value;
+  if(!u||!p){err='اكتب اسم المستخدم والرمز';return go()}
+  try{err='';await signInWithEmailAndPassword(auth,email(u),p)}catch(e){err=MSG[e.code]||'حدث خطأ: '+e.code;go()}
+}
+async function signup(){
+  const n=$('#n').value.trim(),un=$('#u').value.trim().toLowerCase(),pw=$('#p').value,role=$('#r').value;
+  if(!n||!/^[a-z0-9._]{3,20}$/.test(un)||pw.length<6){err='اكتب الاسم، واسم مستخدم إنجليزي (3 أحرف+)، ورمز 6 خانات+';return go()}
+  err='';signing=true;
+  try{
+    const c=await createUserWithEmailAndPassword(auth,email(un),pw);
+    try{
+      let childId=null,cu='';
+      if(role==='parent'){cu=$('#cu').value.trim().toLowerCase();if(!/^[a-z0-9._]{3,20}$/.test(cu))throw {code:'no-child'};const q=await getDoc(doc(db,'usernames',cu));if(!q.exists())throw {code:'no-child'};childId=q.data().uid}
+      const b=writeBatch(db);
+      b.set(doc(db,'users',c.user.uid),role==='parent'?{name:n,username:un,role,approved:false,childId,childUser:cu}:{name:n,username:un,role,approved:role!=='teacher'});
+      if(role==='student')b.set(doc(db,'usernames',un),{uid:c.user.uid});
+      if(role==='admin')b.set(doc(db,'meta','admin'),{uid:c.user.uid});
+      await b.commit();
+    }catch(e){await c.user.delete();throw {code:role==='admin'?'admin-exists':e.code}}
+    signing=false;await loadMe(c.user);
+  }catch(e){signing=false;err=MSG[e.code]||'حدث خطأ: '+e.code;go()}
+}
+
+async function cards(list,mode){
+  return (await Promise.all(list.map(h=>card(h,mode)))).join('')||'<p class="meta">لا توجد واجبات.</p>';
+}
+async function card(h,mode){
+  const cs=(await getDocs(collection(db,'hw',h.id,'comments'))).docs.map(d=>d.data()).sort((a,b)=>a.at-b.at);
+  let x='';
+  if(mode==='s'){
+    const s=await getDoc(doc(db,'hw',h.id,'subs',me.id));
+    x=s.exists()?`<div class="ok">✓ تم التسليم</div><div class="cm">${esc(s.data().text)}${img(s.data().img)}</div>`:`<textarea id="s_${h.id}" placeholder="اكتب إجابتك هنا"></textarea><label>صورة الإجابة (اختياري)</label><input type="file" accept="image/*" id="si_${h.id}"><button class="full" data-a="sub" data-i="${h.id}">تسليم</button>`;
+  }
+  if(mode==='t'){
+    const ss=(await getDocs(collection(db,'hw',h.id,'subs'))).docs.map(d=>d.data());
+    x=`<div class="ok">التسليمات: ${ss.length}</div>`+ss.map(s=>`<div class="cm"><b>${esc(s.name)}</b><br>${esc(s.text)}${img(s.img)}</div>`).join('');
+  }
+  return `<div class="card"><h3>${esc(h.title)}</h3><div class="meta">المدرس: ${esc(h.byName)} · التسليم: ${esc(h.due||'غير محدد')}</div><p>${esc(h.desc)}</p>${img(h.img)}${x}
+  ${cs.map(c=>`<div class="cm"><b>${esc(c.name)}</b> <span class="meta">(${R[c.role]})</span><br>${esc(c.text)}</div>`).join('')}
+  <div style="display:flex;gap:6px;margin-top:6px"><input id="c_${h.id}" placeholder="اكتب تعليقاً أو سؤالاً"><button data-a="cm" data-i="${h.id}">إرسال</button></div>
+  ${mode==='t'?`<button class="del" style="margin-top:8px" data-a="delhw" data-i="${h.id}">حذف الواجب</button>`:''}</div>`;
+}
+const hwList=async q=>(await getDocs(q)).docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>b.at-a.at);
+
+async function teacherV(){
+  if(!me.approved)return '<div class="card"><h2>حسابك قيد المراجعة</h2><p>سيتم تفعيل حسابك بعد موافقة مسؤول المنصة، ثم تقدر تنشر الواجبات.</p></div>';
+  const l=await hwList(query(collection(db,'hw'),where('byId','==',me.id)));const qs=await qList(query(collection(db,'quizzes'),where('byId','==',me.id)));
+  return `<div class="card"><h2>واجب جديد</h2><label>العنوان</label><input id="t"><label>الوصف</label><textarea id="d"></textarea><label>موعد التسليم</label><input id="du" type="date"><label>صورة (اختياري)</label><input type="file" accept="image/*" id="hi"><button class="full" data-a="addhw">نشر الواجب للطلاب</button></div>${QF}<h2>واجباتي (${l.length})</h2>`+await cards(l,'t')+`<h2>امتحاناتي (${qs.length})</h2>`+await quizzes(qs,'t');
+}
+async function studentV(){
+  const l=await hwList(collection(db,'hw'));
+  const qs=await qList(collection(db,'quizzes'));return `<h2>الامتحانات (${qs.length})</h2>`+await quizzes(qs,'s')+`<h2>الواجبات (${l.length})</h2>`+await cards(l,'s');
+}
+async function adminV(){
+  const us=(await getDocs(collection(db,'users'))).docs.map(d=>({id:d.id,...d.data()}));
+  const l=await hwList(collection(db,'hw'));
+  const c=r=>us.filter(u=>u.role===r).length;
+  return `<div class="stats"><div class="stat"><b>${c('student')}</b>طلاب</div><div class="stat"><b>${c('teacher')}</b>مدرسون</div><div class="stat"><b>${l.length}</b>واجبات</div></div>
+  <div class="card"><h2>المستخدمون</h2>${us.map(u=>`<div class="row"><span>${esc(u.name)} <span class="meta">@${esc(u.username)} · ${R[u.role]}${u.childUser?' · ابن: '+esc(u.childUser):''}${(u.role==='teacher'||u.role==='parent')&&!u.approved?' · بانتظار الموافقة':''}</span></span><span class="bt">${(u.role==='teacher'||u.role==='parent')&&!u.approved?`<button class="go" data-a="ok" data-i="${u.id}">قبول</button>`:''}${u.id===me.id?'':`<button class="del" data-a="delu" data-i="${u.id}">حذف</button>`}</span></div>`).join('')}</div>
+  <div class="card"><h2>كل الواجبات</h2>${l.map(h=>`<div class="row"><span>${esc(h.title)} <span class="meta">${esc(h.byName)}</span></span><button class="del" data-a="delhw" data-i="${h.id}">حذف</button></div>`).join('')||'<p class="meta">لا توجد واجبات.</p>'}</div>`;
+}
+
+const img=s=>s&&s.startsWith('data:image/')?`<img class="pic" src="${esc(s)}">`:'';
+function pic(id){return new Promise(r=>{const f=$('#'+id)?.files[0];if(!f)return r('');const im=new Image();im.onload=()=>{const k=Math.min(1,800/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;c.getContext('2d').drawImage(im,0,0,c.width,c.height);r(c.toDataURL('image/jpeg',.6))};im.onerror=()=>r('');im.src=URL.createObjectURL(f)})}
+const QF=`<div class="card"><h2>امتحان قصير جديد</h2><label>العنوان</label><input id="qt"><label>الأسئلة</label><textarea id="qb" style="min-height:150px" placeholder="ما عاصمة مصر؟
+*القاهرة
+الإسكندرية
+أسوان
+
+2 + 2 = ؟
+3
+*4
+5"></textarea><div class="meta">سؤال في سطر وتحته الاختيارات، وضع * قبل الإجابة الصحيحة، واترك سطراً فارغاً بين الأسئلة.</div><button class="full" data-a="addq">نشر الامتحان</button></div>`;
+const parseQ=t=>t.split(/\n\s*\n/).map(b=>{const l=b.split('\n').map(x=>x.trim()).filter(Boolean);if(l.length<3)return null;let c=-1;const o=l.slice(1).map((x,i)=>{if(x[0]==='*'){c=i;x=x.slice(1).trim()}return x});return c<0?null:{q:l[0],o,c}}).filter(Boolean);
+const qList=async q=>(await getDocs(q)).docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>b.at-a.at);
+async function quizzes(list,mode){
+  return (await Promise.all(list.map(async z=>{
+    const hd=`<div class="card"><h3>📝 ${esc(z.title)}</h3><div class="meta">المدرس: ${esc(z.byName)} · ${z.qs.length} أسئلة</div>`;
+    if(mode==='s'){
+      const r=await getDoc(doc(db,'quizzes',z.id,'res',me.id));
+      if(r.exists())return hd+`<div class="ok">✓ درجتك: ${r.data().score} من ${r.data().total}</div></div>`;
+      return hd+z.qs.map((q,k)=>`<p><b>${k+1}. ${esc(q.q)}</b></p>`+q.o.map((o,j)=>`<label class="opt"><input type="radio" name="q_${z.id}_${k}" value="${j}">${esc(o)}</label>`).join('')).join('')+`<button class="full" data-a="solve" data-i="${z.id}">تسليم الامتحان</button></div>`;
+    }
+    if(mode==='p'){const r=await getDoc(doc(db,'quizzes',z.id,'res',me.childId));return hd+(r.exists()?`<div class="ok">الدرجة: ${r.data().score} من ${r.data().total}</div>`:'<div class="meta">لم يحل بعد</div>')+'</div>'}
+    const rs=(await getDocs(collection(db,'quizzes',z.id,'res'))).docs.map(d=>d.data());
+    return hd+`<div class="ok">عدد من حلّوا: ${rs.length}</div>`+rs.map(r=>`<div class="row"><span>${esc(r.name)}</span><b>${r.score} / ${r.total}</b></div>`).join('')+`<button class="del" style="margin-top:8px" data-a="delq" data-i="${z.id}">حذف الامتحان</button></div>`;
+  }))).join('')||'<p class="meta">لا توجد امتحانات.</p>';
+}
+async function parentV(){
+  if(!me.approved)return '<div class="card"><h2>حسابك قيد المراجعة</h2><p>سيتم تفعيله بعد تأكيد المسؤول لصلتك بالطالب.</p></div>';
+  const l=await hwList(collection(db,'hw')),qs=await qList(collection(db,'quizzes'));
+  const hw=(await Promise.all(l.map(async h=>{const s=await getDoc(doc(db,'hw',h.id,'subs',me.childId));return `<div class="card"><h3>${esc(h.title)}</h3><div class="meta">المدرس: ${esc(h.byName)} · التسليم: ${esc(h.due||'غير محدد')}</div>${s.exists()?'<div class="ok">✓ تم التسليم</div>':'<div class="meta">لم يسلّم بعد</div>'}</div>`}))).join('')||'<p class="meta">لا توجد واجبات.</p>';
+  return `<div class="card"><h2>متابعة الطالب: ${esc(me.childUser)}</h2></div><h2>الامتحانات</h2>`+await quizzes(qs,'p')+`<h2>الواجبات</h2>`+hw;
+}
+document.addEventListener('change',e=>{if(e.target.id==='r')$('#ch').style.display=e.target.value==='parent'?'block':'none'});
+const A={
+  solve:async i=>{const z=(await getDoc(doc(db,'quizzes',i))).data();let s=0;
+    z.qs.forEach((q,k)=>{const r=document.querySelector(`input[name="q_${i}_${k}"]:checked`);if(r&&+r.value===q.c)s++});
+    if(!confirm('تسليم الامتحان؟ لا يمكن التعديل بعد ذلك.'))return;
+    await setDoc(doc(db,'quizzes',i,'res',me.id),{name:me.name,score:s,total:z.qs.length,at:Date.now()});go()},
+  addq:async()=>{const t=$('#qt').value.trim(),qs=parseQ($('#qb').value);
+    if(!t||!qs.length){alert('اكتب العنوان وسؤالاً واحداً على الأقل بالشكل الموضح');return}
+    await addDoc(collection(db,'quizzes'),{title:t,qs,byId:me.id,byName:me.name,at:Date.now()});go()},
+  delq:async i=>{if(confirm('حذف الامتحان؟')){await deleteDoc(doc(db,'quizzes',i));go()}},
+  tab:i=>{tab=i;err='';go()},
+  login,signup,
+  out:()=>signOut(auth),
+  addhw:async()=>{const t=$('#t').value.trim();if(!t)return;
+    await addDoc(collection(db,'hw'),{title:t,desc:$('#d').value.trim(),due:$('#du').value,img:await pic('hi'),byId:me.id,byName:me.name,at:Date.now()});go()},
+  delhw:async i=>{if(confirm('حذف الواجب؟')){await deleteDoc(doc(db,'hw',i));go()}},
+  sub:async i=>{const t=$('#s_'+i).value.trim();if(!t)return;
+    await setDoc(doc(db,'hw',i,'subs',me.id),{name:me.name,text:t,img:await pic('si_'+i),at:Date.now()});go()},
+  cm:async i=>{const t=$('#c_'+i).value.trim();if(!t)return;
+    await addDoc(collection(db,'hw',i,'comments'),{uid:me.id,name:me.name,role:me.role,text:t,at:Date.now()});go()},
+  ok:async i=>{await updateDoc(doc(db,'users',i),{approved:true});go()},
+  delu:async i=>{if(confirm('حذف المستخدم؟')){await deleteDoc(doc(db,'users',i));go()}}
+};
+document.addEventListener('click',async e=>{
+  const b=e.target.closest('[data-a]');if(!b||b.disabled)return;
+  b.disabled=true;
+  try{await A[b.dataset.a](b.dataset.i)}catch(x){alert('حدث خطأ: '+(x.code||x.message))}finally{b.disabled=false}
+});
+</script>
+</body>
+</html>
